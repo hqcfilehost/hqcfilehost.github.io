@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import mimetypes
 import os
 from datetime import datetime
@@ -13,6 +14,7 @@ from urllib.parse import quote
 
 
 INDEX_NAME = "index.html"
+METADATA_NAME = "metadata.json"
 
 
 def format_size(size: int) -> str:
@@ -66,9 +68,14 @@ def relative_url(path: Path, current: Path) -> str:
     return quote(os.path.relpath(path, current).replace(os.sep, "/"), safe="/")
 
 
-def page_html(directory: Path, root: Path, entries: list[tuple[Path, bool, int, float]]) -> str:
+def page_html(
+    directory: Path,
+    root: Path,
+    entries: list[tuple[Path, bool, int, float, str]],
+) -> str:
     rel_dir = directory.relative_to(root)
-    title = "文件目录" if not rel_dir.parts else rel_dir.name
+    title = "黑青菜的文件目录" if not rel_dir.parts else rel_dir.name
+    browser_title = title if not rel_dir.parts else f"{title} · 黑青菜的文件目录"
     root_href = "../" * len(rel_dir.parts) or "./"
     crumbs = [f'<a href="{root_href}">全部文件</a>']
     for index, part in enumerate(rel_dir.parts):
@@ -81,9 +88,9 @@ def page_html(directory: Path, root: Path, entries: list[tuple[Path, bool, int, 
             '<tr class="directory" data-name=".." data-size="0" data-time="0">'
             '<td><a class="entry" href="../"><span class="icon folder">'
             f"{svg_icon('folder')}</span><span>返回上级目录</span></a></td>"
-            '<td data-value="0">—</td><td data-value="0">—</td><td>目录</td></tr>'
+            '<td data-value="0">-</td><td data-value="0">-</td><td>目录</td><td>-</td></tr>'
         )
-    for path, is_dir, size, modified in entries:
+    for path, is_dir, size, modified, comment in entries:
         name = path.name
         href = relative_url(path / INDEX_NAME if is_dir else path, directory)
         kind = icon_for(name, is_dir)
@@ -95,14 +102,14 @@ def page_html(directory: Path, root: Path, entries: list[tuple[Path, bool, int, 
             f'<span>{html.escape(name)}</span></a></td>'
             f'<td data-value="{size}">{format_size(size) if is_dir or size else "0 B"}</td>'
             f'<td data-value="{modified}">{datetime.fromtimestamp(modified).strftime("%Y-%m-%d %H:%M")}</td>'
-            f'<td>{html.escape(type_name)}</td></tr>'
+            f'<td>{html.escape(type_name)}</td><td class="comment">{html.escape(comment) or "-"}</td></tr>'
         )
 
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{html.escape(title)} · 文件目录</title>
+<title>{html.escape(browser_title)}</title>
 <style>
 :root{{color-scheme:light;--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#73809a;--line:#e9edf5;--accent:#5b63f5;--accent-soft:#eef0ff;--shadow:0 18px 50px #25345b12}}
 *{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
@@ -115,11 +122,11 @@ h1{{font-size:clamp(26px,4vw,40px);letter-spacing:-.04em;margin:12px 0 6px}}.eye
 </style>
 </head>
 <body><main class="shell"><div class="hero"><div><div class="eyebrow">HQC FILE HOST</div><h1>{html.escape(title)}</h1><nav class="crumbs">{" ".join(crumbs)}</nav></div><input class="search" type="search" placeholder="搜索当前目录…" aria-label="搜索当前目录"></div>
-<section class="card"><table><thead><tr><th><button data-sort="name">名称</button></th><th><button data-sort="size">大小</button></th><th><button data-sort="time">修改时间</button></th><th><button data-sort="type">类型</button></th></tr></thead><tbody>{"".join(rows) if rows else '<tr><td colspan="4" class="empty">这个目录是空的</td></tr>'}</tbody></table></section></main>
+<section class="card"><table><thead><tr><th><button data-sort="name">名称</button></th><th><button data-sort="size">大小</button></th><th><button data-sort="time">修改时间</button></th><th><button data-sort="type">类型</button></th><th>说明</th></tr></thead><tbody>{"".join(rows) if rows else '<tr><td colspan="5" class="empty">这个目录是空的</td></tr>'}</tbody></table></section></main>
 <script>
 const body=document.querySelector("tbody"), search=document.querySelector(".search");
 document.querySelectorAll("th button").forEach(button=>button.addEventListener("click",()=>{{const key=button.dataset.sort, asc=!button.classList.contains("asc");document.querySelectorAll("th button").forEach(b=>b.classList.remove("asc","desc"));button.classList.add(asc?"asc":"desc");const rows=[...body.querySelectorAll("tr")];rows.sort((a,b)=>{{let x,y;if(key==="name"){{x=a.dataset.name||"";y=b.dataset.name||""}}else if(key==="type"){{x=a.children[3]?.textContent||"";y=b.children[3]?.textContent||""}}else{{x=Number(a.dataset[key]||0);y=Number(b.dataset[key]||0)}}return (x<y?-1:x>y?1:0)*(asc?1:-1)}});rows.forEach(row=>body.appendChild(row))}}));
-search.addEventListener("input",()=>{{const query=search.value.trim().toLowerCase();body.querySelectorAll("tr").forEach(row=>row.hidden=!!query&&!(row.dataset.name||"").includes(query))}});
+search.addEventListener("input",()=>{{const query=search.value.trim().toLowerCase();body.querySelectorAll("tr").forEach(row=>row.hidden=!!query&&!(row.textContent||"").toLowerCase().includes(query))}});
 </script></body></html>"""
 
 
@@ -127,15 +134,29 @@ def generate(root: Path) -> None:
     root = root.resolve()
     if not root.is_dir():
         raise SystemExit(f"目录不存在: {root}")
+    metadata_path = root.parent / METADATA_NAME
+    metadata = {}
+    if metadata_path.exists():
+        try:
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            raise SystemExit(f"无法读取 {metadata_path}: {error}") from error
+        if not isinstance(metadata, dict):
+            raise SystemExit(f"{metadata_path} 必须是 JSON 对象")
     directories = [root] + sorted((p for p in root.rglob("*") if p.is_dir()), key=lambda p: str(p))
     for directory in directories:
         entries = []
         for path in sorted(directory.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
-            if path.name == INDEX_NAME or path.name.startswith("."):
+            if path.name in (INDEX_NAME, METADATA_NAME) or path.name.startswith("."):
                 continue
             is_dir = path.is_dir()
             size = directory_size(path) if is_dir else path.stat().st_size
-            entries.append((path, is_dir, size, path.stat().st_mtime))
+            key = path.relative_to(root).as_posix()
+            value = metadata.get(key, {})
+            comment = value.get("comment", "") if isinstance(value, dict) else value
+            if not isinstance(comment, str):
+                raise SystemExit(f"{metadata_path} 中 {key} 的 comment 必须是字符串")
+            entries.append((path, is_dir, size, path.stat().st_mtime, comment))
         (directory / INDEX_NAME).write_text(page_html(directory, root, entries), encoding="utf-8")
     print(f"已生成 {len(directories)} 个目录页面：{root}")
 
