@@ -1,0 +1,5 @@
+{
+    "braille_spt.cpp": {
+        "comment": "需要与braille.h在同一目录下才能正常运作"
+    }
+}
