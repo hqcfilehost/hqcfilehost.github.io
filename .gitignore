@@ -57,3 +57,6 @@ Backups.backupdb
 .MobileBackups.trash
 MobileBackups.trash
 tmbootpicker.efi
+
+# Others
+__pycache__/
