@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; color: #24292f; }
+    h1 { font-size: 1.5rem; }
+    h3 { margin: 28px 0 8px; font-size: .95rem; color: #57606a; font-weight: 600; }
+    table { border-collapse: collapse; width: 100%; }
+    td { padding: 7px 12px; border-bottom: 1px solid #eaecef; }
+    td.time { color: #8b949e; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+    a { text-decoration: none; color: #0969da; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  {{ content }}
+</body>
+</html>
