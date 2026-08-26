@@ -2,7 +2,7 @@
 title: 文件目录
 target: /files/
 ---
-<h1>{{ page.title }}</h1>
+<h2>{{ page.title }}</h2>
 
 {% assign items = site.static_files | where_exp: "f", "f.path contains page.target" %}
 {% assign groups = items | group_by_exp: "f", "f.path | remove: f.name" %}
