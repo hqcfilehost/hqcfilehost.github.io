@@ -1,0 +1,50 @@
+name: Generate file index
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-file-index
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Restore committed file times
+        shell: bash
+        run: |
+          while IFS= read -r -d '' file; do
+            timestamp="$(git log -1 --format=%cI -- "$file")"
+            touch -d "$timestamp" "$file"
+          done < <(git ls-files -z files)
+
+      - name: Generate static indexes
+        run: python generate_index.py
+
+      - name: Commit and push changes
+        shell: bash
+        run: |
+          if git diff --quiet -- files; then
+            echo "No index changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add files
+          git commit -m "chore: update generated file indexes"
+          git push
