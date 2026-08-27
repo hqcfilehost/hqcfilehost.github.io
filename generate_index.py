@@ -109,6 +109,10 @@ def page_html(
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="96x96" href="{relative_url(root.parent / "favicon/favicon-96x96.png", directory)}">
+<link rel="shortcut icon" href="{relative_url(root.parent / "favicon/favicon.ico", directory)}">
+<link rel="apple-touch-icon" sizes="180x180" href="{relative_url(root.parent / "favicon/apple-touch-icon.png", directory)}">
+<link rel="manifest" href="{relative_url(root.parent / "favicon/site.webmanifest", directory)}">
 <title>{html.escape(browser_title)}</title>
 <style>
 :root{{color-scheme:light;--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#73809a;--line:#e9edf5;--accent:#5b63f5;--accent-soft:#eef0ff;--shadow:0 18px 50px #25345b12}}
