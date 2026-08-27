@@ -1,5 +1,8 @@
 {
     "braille_spt.cpp": {
         "comment": "需要与braille.h在同一目录下才能正常运作"
+    },
+    "egg-man-ext.zip": {
+        "comment": "蛋房浏览器扩展（需要Chromium）"
     }
 }
