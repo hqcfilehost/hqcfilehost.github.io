@@ -26,7 +26,7 @@ namespace braille {
 	/**
 	 * Transfer dots string to single Braille - 将点位字符串转换为单个盲文
 	 * 参数：
-	 * `dots`：点位字符串，非法的点位字符将被忽略
+	 * `dots` ：点位字符串，非法的点位字符将被忽略
 	 * 
 	 * 点位字符串标志凸起的盲文点位，建议但不强制排序
 	 * 单个或多个盲文按照 UTF-8 可变编码输出，可能不适用于 ASCII-only 环境
@@ -37,7 +37,7 @@ namespace braille {
 	 * 7  8
 	 * 注：前六位编号亦被标准编号 GF0019-2018，即《国家通用盲文方案》使用
 	 */
-	inline std::string d2b (const std::string& dots) {
+	std::string d2b (const std::string& dots) {
 		std::string braille = "";
 		unsigned char raised = 0;
 		for (const auto& d : dots) if ('1' <= d && d <= '8') raised += (1 << (d - '1'));
@@ -50,7 +50,7 @@ namespace braille {
 	/**
 	 * Transfer single Braille to dots string - 将单个盲文转换为点位字符串
 	 * 参数：
-	 * `braille`：单个盲文，非法的盲文将被忽略
+	 * `braille` ：单个盲文，非法的盲文将被忽略
 	 * 
 	 * 点位字符串标志凸起的盲文点位，建议但不强制排序
 	 * 单个或多个盲文按照 UTF-8 可变编码输出，可能不适用于 ASCII-only 环境
@@ -61,7 +61,7 @@ namespace braille {
 	 * 7  8
 	 * 注：前六位编号亦被标准编号 GF0019-2018，即《国家通用盲文方案》使用
 	 */
-	inline std::string b2d (const std::string& braille) {
+	std::string b2d (const std::string& braille) {
 		std::string dots = "";
 		unsigned char raised = ((braille[1] & 0x0F) << 6) | (braille[2] & 0x3F);
 		for (int i = 0; i < 8; i++) if ((raised >> i) & 1) dots.push_back(i + '1');
@@ -71,8 +71,8 @@ namespace braille {
 	/**
 	 * Transfer batch dots string to multiple Brailles - 将批量点位字符串转换为多个盲文
 	 * 参数：
-	 * `batch_dots`：批量点位字符串，非法的点位字符串中的非法字符将被忽略
-	 * `brackets`（可选）：包裹符号字符串，长度需为偶数，若长度为奇数，最后字符将被忽略。该值默认为braille::DEFAULT_BRACKETS
+	 * `batch_dots` ：批量点位字符串，非法的点位字符串中的非法字符将被忽略
+	 * `brackets` （可选）：包裹符号字符串，长度需为偶数，若长度为奇数，最后字符将被忽略。该值默认为 braille::DEFAULT_BRACKETS
 	 * 
 	 * 点位字符串标志凸起的盲文点位，建议但不强制排序
 	 * 单个或多个盲文按照 UTF-8 可变编码输出，可能不适用于 ASCII-only 环境
@@ -86,7 +86,7 @@ namespace braille {
 	 * 批量点位字符串即多段点位字符串的组合，每段点位字符串必须以指定的包裹符号包裹，否则视为非法，按原样返回
 	 * 包裹符号字符串即包裹符号的指定合集，分为前后两段，前段表示可用的包裹开头，后段表示可用的包裹结尾。包裹开头和包裹结尾不要求但建议在前后两段中一一对应
 	 */
-	inline std::string batch_d2b (const std::string& batch_dots, const std::string& brackets = braille::DEFAULT_BRACKETS) {
+	std::string batch_d2b (const std::string& batch_dots, const std::string& brackets = braille::DEFAULT_BRACKETS) {
 		std::string brailles = "", dot = "";
 		const unsigned long long brackets_halflen = brackets.size() / 2;
 		bool in_bracket = false;
@@ -107,8 +107,8 @@ namespace braille {
 	/**
 	 * Transfer multiple Brailles to batch dots string - 将多个盲文转换为批量点位字符串
 	 * 参数：
-	 * `brailles`：多个盲文，非法盲文将按原样返回
-	 * `brackets`（可选）：包裹符号字符串，长度需为偶数，若长度为奇数，最后字符将被忽略。该值默认为braille::DEFAULT_BRACKETS
+	 * `brailles` ：多个盲文，非法盲文将按原样返回
+	 * `brackets` （可选）：包裹符号字符串，长度需为偶数，若长度为奇数，最后字符将被忽略。该值默认为 braille::DEFAULT_BRACKETS
 	 * 
 	 * 点位字符串标志凸起的盲文点位，建议但不强制排序
 	 * 单个或多个盲文按照 UTF-8 可变编码输出，可能不适用于 ASCII-only 环境
@@ -122,7 +122,7 @@ namespace braille {
 	 * 批量点位字符串即多段点位字符串的组合，每段点位字符串以指定的包裹符号包裹，此处默认使用包裹符号字符串中出现的第一组可用包裹符号
 	 * 包裹符号字符串即包裹符号的指定合集，分为前后两段，前段表示可用的包裹开头，后段表示可用的包裹结尾。包裹开头和包裹结尾不要求但建议在前后两段中一一对应
 	 */
-	inline std::string batch_b2d (const std::string& brailles, const std::string& brackets = braille::DEFAULT_BRACKETS) {
+	std::string batch_b2d (const std::string& brailles, const std::string& brackets = braille::DEFAULT_BRACKETS) {
 		const unsigned long long brackets_halflen = brackets.size() / 2;
 		if (brailles.size() < 3 || brackets_halflen == 0) return brailles;
 		std::string batch_dots = "";
@@ -142,6 +142,51 @@ namespace braille {
 			} else batch_dots.push_back(brailles[i]);
 		} return batch_dots;
 	}
+
+	/**
+	 * 字节加密类，按字节加密，最基础
+	 * 
+	 * 成员：
+	 * `encode(const std::string& plain)` ：调用 braille::d2b() 逐个字节转换成盲文
+	 * `decode(const std::string& cipher)` ：调用 braille::b2d() 逐个盲文还原为字节，非法字节序列按原样返回
+	 */
+	class Byte {
+		public:
+			std::string target;
+			Byte(std::string x) : target(x) {}
+
+			inline std::string encode (const std::string& plain) const {
+				std::string cipher = "";
+				for (const auto& p : plain) {
+					std::string single = "";
+					for (short i = 0; i < 8; i++)
+						if (static_cast<unsigned char>(p) >> i & 1) single.push_back('1' + i);
+					cipher.append(d2b(single));
+				} return cipher;
+			} inline std::string decode (const std::string& cipher) const {
+				std::string plain = "";
+				for (unsigned long long i = 0; i < cipher.size();) {
+					const bool is_braille = i + 2 < cipher.size()
+						&& static_cast<unsigned char>(cipher[i]) == 0xE2
+						&& static_cast<unsigned char>(cipher[i + 1]) >= 0xA0
+						&& static_cast<unsigned char>(cipher[i + 1]) <= 0xA3
+						&& static_cast<unsigned char>(cipher[i + 2]) >= 0x80
+						&& static_cast<unsigned char>(cipher[i + 2]) <= 0xBF;
+					if (!is_braille) {
+						plain.push_back(cipher[i++]);
+						continue;
+					} const std::string dots = b2d(cipher.substr(i, 3));
+					unsigned char decoded = 0;
+					for (const auto& dot : dots) decoded |= 1 << (dot - '1');
+					plain.push_back(static_cast<char>(decoded));
+					i += 3;
+				} return plain;
+			} inline std::string encode () const {
+				return encode(target);
+			} inline std::string decode () const {
+				return decode(target);
+			}
+	};
 }
 
 #endif
