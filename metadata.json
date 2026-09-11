@@ -1,8 +1,11 @@
 {
-    "braille_spt.cpp": {
-        "comment": "需要与 braille.h 在同一目录下才能正常运作"
-    },
     "egg-man-ext.crx": {
         "comment": "Chromium 蛋房浏览器扩展（未签名）"
+    },
+    "google-chrome-109-for-win7.exe": {
+        "comment": "最新一版支持 Windows 7 的 Google Chrome"
+    },
+    "ungoogled-chromium-109-for-win7.exe": {
+        "comment": "最新一版支持 Windows 7 的 Ungoogled Chromium"
     }
 }
