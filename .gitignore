@@ -60,3 +60,6 @@ tmbootpicker.efi
 
 # Others
 __pycache__/
+
+# Large files hosted on GitHub Releases
+files/fonts/maple-mono-nf-cn.zip
