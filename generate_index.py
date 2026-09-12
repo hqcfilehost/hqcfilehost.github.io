@@ -8,6 +8,7 @@ import html
 import json
 import mimetypes
 import os
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
@@ -27,6 +28,24 @@ def format_size(size: int) -> str:
         if value < 1024 or unit == units[-1]:
             return f"{value:.1f} {unit}"
     return f"{size} B"
+
+
+def is_git_ignored(path: Path, root: Path) -> bool:
+    """Check if a file or directory is ignored by Git."""
+    try:
+        # Use git check-ignore to determine if the path is ignored
+        rel_path = path.relative_to(root)
+        result = subprocess.run(
+            ["git", "check-ignore", str(rel_path)],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        return result.returncode == 0
+    except (subprocess.SubprocessError, ValueError):
+        # If git command fails or path is not relative to root, assume not ignored
+        return False
 
 
 def icon_for(name: str, is_dir: bool) -> str:
@@ -71,7 +90,7 @@ def relative_url(path: Path, current: Path) -> str:
 def page_html(
     directory: Path,
     root: Path,
-    entries: list[tuple[Path, bool, int, float, str]],
+    entries: list[tuple[Path, bool, int, float, str, str | None]],
     locale_types: dict[str, str] = None,
 ) -> str:
     rel_dir = directory.relative_to(root)
@@ -91,9 +110,12 @@ def page_html(
             f"{svg_icon('folder')}</span><span>返回上级目录</span></a></td>"
             '<td data-value="0">-</td><td data-value="0">-</td><td>目录</td><td>-</td></tr>'
         )
-    for path, is_dir, size, modified, comment in entries:
+    for path, is_dir, size, modified, comment, release_url in entries:
         name = path.name
-        href = relative_url(path / INDEX_NAME if is_dir else path, directory)
+        if release_url:
+            href = release_url
+        else:
+            href = relative_url(path / INDEX_NAME if is_dir else path, directory)
         kind = icon_for(name, is_dir)
         if is_dir:
             type_name = "目录"
@@ -163,14 +185,20 @@ def generate(root: Path) -> None:
         for path in sorted(directory.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
             if path.name in (INDEX_NAME, METADATA_NAME) or path.name.startswith("."):
                 continue
+            # Skip files ignored by Git (e.g., large files hosted on GitHub Releases)
+            is_ignored = is_git_ignored(path, root)
             is_dir = path.is_dir()
             size = directory_size(path) if is_dir else path.stat().st_size
             key = path.relative_to(root).as_posix()
             value = files_metadata.get(key, {})
             comment = value.get("comment", "") if isinstance(value, dict) else value
+            release_url = value.get("release_url") if isinstance(value, dict) else None
             if not isinstance(comment, str):
                 raise SystemExit(f"{metadata_path} 中 {key} 的 comment 必须是字符串")
-            entries.append((path, is_dir, size, path.stat().st_mtime, comment))
+            # Skip ignored files that don't have a release URL
+            if is_ignored and not release_url:
+                continue
+            entries.append((path, is_dir, size, path.stat().st_mtime, comment, release_url))
         (directory / INDEX_NAME).write_text(page_html(directory, root, entries, locale_types), encoding="utf-8")
     print(f"已生成 {len(directories)} 个目录页面：{root}")
 
