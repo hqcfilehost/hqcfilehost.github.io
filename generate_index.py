@@ -72,6 +72,7 @@ def page_html(
     directory: Path,
     root: Path,
     entries: list[tuple[Path, bool, int, float, str]],
+    locale_types: dict[str, str] = None,
 ) -> str:
     rel_dir = directory.relative_to(root)
     title = "黑青菜的文件目录" if not rel_dir.parts else rel_dir.name
@@ -94,7 +95,11 @@ def page_html(
         name = path.name
         href = relative_url(path / INDEX_NAME if is_dir else path, directory)
         kind = icon_for(name, is_dir)
-        type_name = "目录" if is_dir else (mimetypes.guess_type(name)[0] or "文件").split("/")[-1]
+        if is_dir:
+            type_name = "目录"
+        else:
+            ext = Path(name).suffix.lower()
+            type_name = locale_types.get(ext, (mimetypes.guess_type(name)[0] or "文件").split("/")[-1]) if locale_types else (mimetypes.guess_type(name)[0] or "文件").split("/")[-1]
         rows.append(
             f'<tr class="{"directory" if is_dir else "file"}" data-name="{html.escape(name.lower())}" '
             f'data-size="{size}" data-time="{modified:.3f}">'
@@ -147,6 +152,11 @@ def generate(root: Path) -> None:
             raise SystemExit(f"无法读取 {metadata_path}: {error}") from error
         if not isinstance(metadata, dict):
             raise SystemExit(f"{metadata_path} 必须是 JSON 对象")
+    
+    # 兼容旧结构和新结构
+    files_metadata = metadata.get("files", metadata)
+    locale_types = metadata.get("locale", {}).get("types", {})
+    
     directories = [root] + sorted((p for p in root.rglob("*") if p.is_dir()), key=lambda p: str(p))
     for directory in directories:
         entries = []
@@ -156,12 +166,12 @@ def generate(root: Path) -> None:
             is_dir = path.is_dir()
             size = directory_size(path) if is_dir else path.stat().st_size
             key = path.relative_to(root).as_posix()
-            value = metadata.get(key, {})
+            value = files_metadata.get(key, {})
             comment = value.get("comment", "") if isinstance(value, dict) else value
             if not isinstance(comment, str):
                 raise SystemExit(f"{metadata_path} 中 {key} 的 comment 必须是字符串")
             entries.append((path, is_dir, size, path.stat().st_mtime, comment))
-        (directory / INDEX_NAME).write_text(page_html(directory, root, entries), encoding="utf-8")
+        (directory / INDEX_NAME).write_text(page_html(directory, root, entries, locale_types), encoding="utf-8")
     print(f"已生成 {len(directories)} 个目录页面：{root}")
 
 
