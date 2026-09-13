@@ -10,8 +10,10 @@
             "comment": "最新一版支持 Windows 7 的 Ungoogled Chromium"
         },
         "fonts/maple-mono-nf-cn.zip": {
-            "comment": "Maple Mono NF CN 字体",
             "release_url": "https://github.com/hqcfilehost/hqcfilehost.github.io/releases/download/files/maple-mono-nf-cn.zip"
+        },
+        "palm-ime.exe": {
+            "comment": "手心输入法安装程序"
         }
     },
     "locale": {
