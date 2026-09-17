@@ -33,18 +33,17 @@ def format_size(size: int) -> str:
 def is_git_ignored(path: Path, root: Path) -> bool:
     """Check if a file or directory is ignored by Git."""
     try:
-        # Use git check-ignore to determine if the path is ignored
         rel_path = path.relative_to(root)
         result = subprocess.run(
-            ["git", "check-ignore", str(rel_path)],
-            cwd=root,
+            ["git", "check-ignore", "--quiet", "--no-index", "--", str(rel_path)],
+            cwd=root.parent,
             capture_output=True,
             text=True,
             check=False
         )
         return result.returncode == 0
-    except (subprocess.SubprocessError, ValueError):
-        # If git command fails or path is not relative to root, assume not ignored
+    except (OSError, subprocess.SubprocessError, ValueError):
+        # Index generation should still work outside a Git checkout.
         return False
 
 
@@ -91,7 +90,7 @@ def page_html(
     directory: Path,
     root: Path,
     entries: list[tuple[Path, bool, int, float, str, str | None]],
-    locale_types: dict[str, str] = None,
+    locale_types: dict[str, str] | None = None,
 ) -> str:
     rel_dir = directory.relative_to(root)
     title = "黑青菜的文件目录" if not rel_dir.parts else rel_dir.name
@@ -175,9 +174,18 @@ def generate(root: Path) -> None:
         if not isinstance(metadata, dict):
             raise SystemExit(f"{metadata_path} 必须是 JSON 对象")
     
-    # 兼容旧结构和新结构
     files_metadata = metadata.get("files", metadata)
-    locale_types = metadata.get("locale", {}).get("types", {})
+    if not isinstance(files_metadata, dict):
+        raise SystemExit(f"{metadata_path} 中 files 必须是 JSON 对象")
+    locale = metadata.get("locale", {})
+    if not isinstance(locale, dict):
+        raise SystemExit(f"{metadata_path} 中 locale 必须是 JSON 对象")
+    locale_types = locale.get("types", {})
+    if not isinstance(locale_types, dict) or not all(
+        isinstance(key, str) and isinstance(value, str)
+        for key, value in locale_types.items()
+    ):
+        raise SystemExit(f"{metadata_path} 中 locale.types 必须是字符串到字符串的映射")
     
     directories = [root] + sorted((p for p in root.rglob("*") if p.is_dir()), key=lambda p: str(p))
     for directory in directories:
