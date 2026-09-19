@@ -180,7 +180,7 @@ namespace braille {
 	 * `decode(const std::string& cipher)` ：调用 braille::b2d() 逐个盲文还原为字节，非法字节序列按原样返回
 	 * `set_target(const std::string& tgt)` ：设置待处理的目标字符串
 	 * `get_target()` ：获取当前目标字符串
-	 * `target` ：目标字符串，可通过无参数的encode()或decode()直接处理
+	 * `target` ：目标字符串，可通过无参数的 encode() 或 decode() 直接处理
 	 */
 	class Byte {
 		public:
@@ -229,7 +229,7 @@ namespace braille {
 	};
 
 	/**
-	 * 英语编码类，按字母、标点、组合音素等编码，支持底层一级英语盲文，二级盲文的常见合并词对照见braille::English::usage;
+	 * 英语编码类，按字母、标点、组合音素等编码，支持底层一级英语盲文，二级盲文的常见合并词对照见 braille::English::usage;
 	 * 
 	 * 成员：
 	 * `encode(const std::string& plain)` ：将英文、数字和标点转换为盲文，大小写和数字按照英语盲文规则添加对应符号
@@ -237,7 +237,7 @@ namespace braille {
 	 * `add_mapping(const std::string& plain, const std::string& braille)` ：添加或覆盖一组自定义明文与盲文对照
 	 * `set_target(const std::string& tgt)` ：设置待处理的目标字符串
 	 * `get_target()` ：获取当前目标字符串
-	 * `target` ：目标字符串，可通过无参数的encode()或decode()直接处理
+	 * `target` ：目标字符串，可通过无参数的 encode() 或 decode() 直接处理
 	 */
 	class English {
 		private:
