@@ -12,11 +12,14 @@
         "fonts/maple-mono-nf-cn.zip": {
             "release_url": "https://github.com/hqcfilehost/hqcfilehost.github.io/releases/download/files/maple-mono-nf-cn.zip"
         },
+        "fonts/maple-mono-nf-cn-vf.zip": {
+            "comment": "可变字体版 Maple Mono NF CN，大小更小，但老旧系统不支持"
+        },
         "palm-ime.exe": {
             "comment": "手心输入法安装程序"
         },
         "code/2048.c": {
-            "comment": "使用 C 语言实现的 2048，原项目遵循 MIT 协议"
+            "comment": "使用 C 语言实现的可用于类 Unix 系统的 2048，原项目遵循 MIT 协议"
         },
         "code": {
             "comment": "存放源代码文件"
